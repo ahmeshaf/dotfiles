@@ -86,9 +86,9 @@ BREW_PACKAGES=(
   procs         # better ps
 )
 
-# for pkg in "${BREW_PACKAGES[@]}"; do
-#   brew install "$pkg" 2>/dev/null || true
-# done
+for pkg in "${BREW_PACKAGES[@]}"; do
+  brew install "$pkg" 2>/dev/null || true
+done
 
 # Set up fzf key bindings
 "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish 2>/dev/null || true
@@ -96,39 +96,43 @@ BREW_PACKAGES=(
 # --- macOS Defaults ---
 echo "==> Setting macOS defaults..."
 
+# Helper: run defaults write, skip gracefully on failure
+set_default() {
+  defaults write "$@" 2>/dev/null || echo "  Skipped: defaults write $*"
+}
+
 # Finder: show hidden files, extensions, path bar
-# defaults write com.apple.finder AppleShowAllFiles -bool true
-# defaults write NSGlobalDomain AppleShowAllExtensions -bool true
-# defaults write com.apple.finder ShowPathbar -bool true
-# defaults write com.apple.finder ShowStatusBar -bool true
+set_default com.apple.finder AppleShowAllFiles -bool true
+set_default NSGlobalDomain AppleShowAllExtensions -bool true
+set_default com.apple.finder ShowPathbar -bool true
+set_default com.apple.finder ShowStatusBar -bool true
 
 # Finder: search current folder by default
-# defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
+set_default com.apple.finder FXDefaultSearchScope -string "SCcf"
 
 # Disable press-and-hold for keys in favor of key repeat
-# defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+set_default NSGlobalDomain ApplePressAndHoldEnabled -bool false
 
 # Fast key repeat rate
-defaults write NSGlobalDomain KeyRepeat -int 2
-defaults write NSGlobalDomain InitialKeyRepeat -int 15
+set_default NSGlobalDomain KeyRepeat -int 2
+set_default NSGlobalDomain InitialKeyRepeat -int 15
 
 # Save screenshots to ~/Screenshots
 mkdir -p "$HOME/Screenshots"
-defaults write com.apple.screencapture location -string "$HOME/Screenshots"
+set_default com.apple.screencapture location -string "$HOME/Screenshots"
 
 # Avoid creating .DS_Store files on network and USB volumes
-# (requires Full Disk Access for Terminal — skipped if it fails)
-defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true 2>/dev/null || echo "  Skipped DSDontWriteNetworkStores (needs Full Disk Access)"
-defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true 2>/dev/null || echo "  Skipped DSDontWriteUSBStores (needs Full Disk Access)"
+set_default com.apple.desktopservices DSDontWriteNetworkStores -bool true
+set_default com.apple.desktopservices DSDontWriteUSBStores -bool true
 
 # Show battery percentage
-defaults write com.apple.menuextra.battery ShowPercent -string "YES"
+set_default com.apple.menuextra.battery ShowPercent -string "YES"
 
 # Dock: auto-hide, minimize size, no recent apps
-defaults write com.apple.dock autohide -bool true
-defaults write com.apple.dock tilesize -int 48
-defaults write com.apple.dock show-recents -bool false
-defaults write com.apple.dock minimize-to-application -bool true
+set_default com.apple.dock autohide -bool true
+set_default com.apple.dock tilesize -int 48
+set_default com.apple.dock show-recents -bool false
+set_default com.apple.dock minimize-to-application -bool true
 
 # --- Remap Caps Lock to Tab ---
 echo "==> Remapping Caps Lock to Tab..."
