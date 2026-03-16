@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# --- Parse flags ---
+WITH_AZURE=false
+WITH_DATABRICKS=false
+
+for arg in "$@"; do
+  case "$arg" in
+    --azure)      WITH_AZURE=true ;;
+    --databricks) WITH_DATABRICKS=true ;;
+    --help)
+      echo "Usage: ./mac.sh [--azure] [--databricks]"
+      echo "  --azure       Install Azure CLI and related tools"
+      echo "  --databricks  Install Databricks CLI"
+      exit 0 ;;
+  esac
+done
+
 echo "==> macOS dotfiles setup"
 
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -90,6 +106,7 @@ BREW_PACKAGES=(
   node          # Node.js and npm
   claude-code   # Claude Code CLI
   coreutils     # GNU core utilities (gtimeout, gdate, etc.)
+  gh            # GitHub CLI (PRs, issues, actions from terminal)
 )
 
 INSTALLED=$(brew list --formula -1)
@@ -103,8 +120,57 @@ for pkg in "${BREW_PACKAGES[@]}"; do
   fi
 done
 
+# --- Optional: Azure ---
+if [ "$WITH_AZURE" = true ]; then
+  echo "==> Installing Azure tools..."
+  AZURE_PACKAGES=(azure-cli azure-dev)
+  for pkg in "${AZURE_PACKAGES[@]}"; do
+    if echo "$INSTALLED" | grep -qx "$pkg"; then
+      echo "  $pkg already installed, skipping."
+    else
+      echo "  Installing $pkg..."
+      brew install "$pkg" 2>/dev/null || true
+    fi
+  done
+fi
+
+# --- Optional: Databricks ---
+if [ "$WITH_DATABRICKS" = true ]; then
+  echo "==> Installing Databricks CLI..."
+  if echo "$INSTALLED" | grep -qx "databricks"; then
+    echo "  databricks already installed, skipping."
+  else
+    brew install databricks 2>/dev/null || true
+  fi
+fi
+
 # Set up fzf key bindings
 "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish 2>/dev/null || true
+
+# --- Git Config ---
+echo "==> Setting git defaults..."
+git config --global push.autoSetupRemote true
+git config --global pull.rebase true
+git config --global rerere.enabled true
+
+# Global gitignore
+GITIGNORE_GLOBAL="$HOME/.gitignore_global"
+cat > "$GITIGNORE_GLOBAL" << 'GITIGNORE'
+.DS_Store
+.env
+.env.*
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.pyc
+__pycache__/
+node_modules/
+.terraform/
+GITIGNORE
+git config --global core.excludesFile "$GITIGNORE_GLOBAL"
+echo "  Global gitignore set at $GITIGNORE_GLOBAL"
 
 # --- macOS Defaults ---
 echo "==> Setting macOS defaults..."
@@ -325,7 +391,34 @@ alias gla='git log --oneline --graph --decorate --all'
 alias gpull='git pull'
 alias gpush='git push'
 alias gmain='git checkout main'
+# Create branch from latest main
+gnew() { git checkout main && git pull && git checkout -b "$1"; }
 alias gprune='git fetch origin --prune'
+alias gwl='git worktree list'
+
+# Create worktree from main in sibling directory
+gwt() {
+  local branch="$1"
+  local repo_root=$(git rev-parse --show-toplevel)
+  local wt_dir="${repo_root}-${branch}"
+  git worktree add -b "$branch" "$wt_dir" main && cd "$wt_dir"
+}
+
+# Remove worktree and its branch
+gwr() {
+  local branch="$1"
+  local repo_root=$(git rev-parse --show-toplevel)
+  local wt_dir="${repo_root}-${branch}"
+  git worktree remove "$wt_dir" && git branch -D "$branch"
+}
+
+# cd into a worktree
+gwcd() {
+  local branch="$1"
+  local repo_root=$(git rev-parse --show-toplevel)
+  local wt_dir="${repo_root}-${branch}"
+  cd "$wt_dir"
+}
 
 # --- Navigation ---
 alias ..='cd ..'
