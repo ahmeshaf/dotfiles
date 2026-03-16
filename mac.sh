@@ -26,6 +26,8 @@ for key in \
   "com.apple.finder ShowPathbar" \
   "com.apple.finder ShowStatusBar" \
   "com.apple.finder FXDefaultSearchScope" \
+  "NSGlobalDomain com.apple.keyboard.fnState" \
+  "com.apple.keyboard fnState" \
   "NSGlobalDomain ApplePressAndHoldEnabled" \
   "NSGlobalDomain KeyRepeat" \
   "NSGlobalDomain InitialKeyRepeat" \
@@ -84,10 +86,21 @@ BREW_PACKAGES=(
   duf           # better df (disk usage)
   dust          # better du (directory size)
   procs         # better ps
+  colima        # container runtime (Docker alternative)
+  node          # Node.js and npm
+  claude-code   # Claude Code CLI
+  coreutils     # GNU core utilities (gtimeout, gdate, etc.)
 )
 
+INSTALLED=$(brew list --formula -1)
+
 for pkg in "${BREW_PACKAGES[@]}"; do
-  brew install "$pkg" 2>/dev/null || true
+  if echo "$INSTALLED" | grep -qx "$pkg"; then
+    echo "  $pkg already installed, skipping."
+  else
+    echo "  Installing $pkg..."
+    brew install "$pkg" 2>/dev/null || true
+  fi
 done
 
 # Set up fzf key bindings
@@ -109,6 +122,11 @@ set_default com.apple.finder ShowStatusBar -bool true
 
 # Finder: search current folder by default
 set_default com.apple.finder FXDefaultSearchScope -string "SCcf"
+
+# Use F1, F2, etc. as standard function keys (built-in + external keyboards)
+# Note: For Logitech keyboards, use Fn+Esc to toggle fn lock instead
+set_default NSGlobalDomain com.apple.keyboard.fnState -bool true
+set_default com.apple.keyboard fnState -bool true
 
 # Disable press-and-hold for keys in favor of key repeat
 set_default NSGlobalDomain ApplePressAndHoldEnabled -bool false
@@ -263,6 +281,10 @@ fi
 if command -v zoxide &>/dev/null; then
   eval "$(zoxide init "$(basename "$SHELL")")"
   alias cd='z'
+fi
+
+if command -v gtimeout &>/dev/null; then
+  alias timeout='gtimeout'
 fi
 
 if command -v delta &>/dev/null; then
