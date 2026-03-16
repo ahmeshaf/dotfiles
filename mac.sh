@@ -107,6 +107,9 @@ BREW_PACKAGES=(
   claude-code   # Claude Code CLI
   coreutils     # GNU core utilities (gtimeout, gdate, etc.)
   gh            # GitHub CLI (PRs, issues, actions from terminal)
+  pre-commit    # git pre-commit hook manager
+  direnv        # per-directory environment variables
+  atuin         # better shell history (SQLite-backed, searchable)
 )
 
 INSTALLED=$(brew list --formula -1)
@@ -370,6 +373,16 @@ if command -v fzf &>/dev/null; then
   # Source fzf shell integration
   [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
   [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+fi
+
+# atuin (better shell history, replaces Ctrl+R)
+if command -v atuin &>/dev/null; then
+  eval "$(atuin init "$(basename "$SHELL")")"
+fi
+
+# direnv (auto-load .envrc per directory)
+if command -v direnv &>/dev/null; then
+  eval "$(direnv hook "$(basename "$SHELL")")"
 fi
 
 # Starship prompt
