@@ -225,7 +225,7 @@ set_default com.apple.desktopservices DSDontWriteUSBStores -bool true
 set_default com.apple.menuextra.battery ShowPercent -string "YES"
 
 # Dock: auto-hide, minimize size, no recent apps
-set_default com.apple.dock autohide -bool true
+set_default com.apple.dock autohide -bool false
 set_default com.apple.dock tilesize -int 48
 set_default com.apple.dock show-recents -bool false
 set_default com.apple.dock minimize-to-application -bool true
