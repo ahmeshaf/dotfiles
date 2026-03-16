@@ -103,6 +103,10 @@ BREW_PACKAGES=(
   dust          # better du (directory size)
   procs         # better ps
   colima        # container runtime (Docker alternative)
+  docker        # Docker CLI
+  docker-compose # Docker Compose v2 plugin (docker compose)
+  docker-buildx # Docker BuildKit
+  lazydocker    # TUI for Docker
   node          # Node.js and npm
   claude-code   # Claude Code CLI
   coreutils     # GNU core utilities (gtimeout, gdate, etc.)
@@ -145,6 +149,11 @@ if [ "$WITH_DATABRICKS" = true ]; then
   else
     brew install databricks 2>/dev/null || true
   fi
+fi
+
+# Set up docker buildx as default builder
+if command -v docker &>/dev/null && docker buildx version &>/dev/null; then
+  docker buildx install 2>/dev/null || true
 fi
 
 # Set up fzf key bindings
@@ -315,6 +324,7 @@ export EDITOR="nvim"
 export VISUAL="nvim"
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
+export DOCKER_BUILDKIT=1        # use BuildKit by default for docker build
 
 # History (zsh)
 if [ -n "$ZSH_VERSION" ]; then
@@ -432,6 +442,28 @@ gwcd() {
   local wt_dir="${repo_root}-${branch}"
   cd "$wt_dir"
 }
+
+# --- Docker aliases ---
+alias dk='docker'
+alias dkps='docker ps'                # dkps
+alias dkpsa='docker ps -a'            # dkpsa (includes stopped)
+alias dki='docker images'             # dki
+alias dkl='docker logs -f'            # dkl <container>
+alias dke='docker exec -it'           # dke <container> bash
+alias dkr='docker run -it --rm'       # dkr ubuntu:latest bash
+alias dkrm='docker rm -f'             # dkrm <container>
+alias dkrmi='docker rmi'              # dkrmi <image>
+alias dkp='docker system prune -f'    # dkp (clean unused resources)
+alias dkb='docker build'              # dkb -t myapp .
+alias dkt='docker tag'                # dkt myapp:latest registry/myapp:v1
+alias dkph='docker push'              # dkph registry/myapp:v1
+alias dkpl='docker pull'              # dkpl nginx:latest
+alias dc='docker compose'             # dc ps
+alias dcu='docker compose up -d'      # dcu (start in background)
+alias dcd='docker compose down'       # dcd (stop and remove)
+alias dcl='docker compose logs -f'    # dcl <service>
+alias dcr='docker compose restart'    # dcr <service>
+alias dcb='docker compose build'      # dcb <service>
 
 # --- Navigation ---
 alias ..='cd ..'
