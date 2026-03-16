@@ -325,6 +325,7 @@ export VISUAL="nvim"
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 export DOCKER_BUILDKIT=1        # use BuildKit by default for docker build
+export ARXIV_DL_DIR="$HOME/.arxiv"  # default download dir for arxiv-dl
 
 # History (zsh)
 if [ -n "$ZSH_VERSION" ]; then
